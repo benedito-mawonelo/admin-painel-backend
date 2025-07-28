@@ -6,7 +6,7 @@ from firebase_admin import credentials
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-5x@1orre6%wrqlz5@)6b)x&a@#$lrak$b1*l@4()hw7vs1bd-1')
+SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
