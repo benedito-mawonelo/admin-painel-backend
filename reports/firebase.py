@@ -1,4 +1,5 @@
-from firebase_admin import firestore
+from firebase_admin import auth, firestore
+from django.utils.timezone import now
 
 # Inicializa o cliente Firestore
 db = firestore.client()
@@ -99,3 +100,45 @@ def get_users_by_telefone(telefone):
 
     docs = query.stream()
     return [{ 'id': doc.id, **doc.to_dict() } for doc in docs]
+
+
+def create_user(data):
+    telefone = data.get("telefone")
+    if not telefone:
+        raise ValueError("Campo 'telefone' é obrigatório.")
+
+    # Verifica duplicado
+    existing_users = db.collection("users").where(FIRESTORE_PHONE_FIELD, "==", telefone).stream()
+    if any(existing_users):
+        raise ValueError("Este número já está em uso.")
+
+    # Se não enviou email, gera automático
+    email = data.get("email") or f"{telefone}@gmail.com"
+
+    # Cria usuário no Firebase Auth
+    user_record = auth.create_user(
+        email=email,
+        password=data.get("password"),
+        display_name=f"{data.get('name','')} {data.get('apelido','')}",
+        phone_number=f"+258{telefone}"
+    )
+    uid = user_record.uid
+
+    # Salva dados adicionais no Firestore
+    new_user = {
+        "id": uid,
+        "name": data.get("name", ""),
+        "apelido": data.get("apelido", ""),
+        "gender": data.get("gender", ""),
+        "birthYear": data.get("birthYear", ""),
+        "provincia": data.get("provincia", ""),
+        "telefone": telefone,
+        "email": email,
+        "password": data.get("password"),  # ⚠️ em produção, melhor não salvar em texto puro
+        "image": data.get("image"),
+        "createdAt": now().isoformat(),
+        "updatedAt": now().isoformat(),
+    }
+
+    db.collection("users").document(uid).set(new_user)
+    return new_user

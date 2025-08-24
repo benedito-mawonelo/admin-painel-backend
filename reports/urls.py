@@ -5,7 +5,8 @@ from .views import (
     firebase_user_count,
     filter_users_by_phone,
     update_user_by_id,
-    update_user_by_phone_view
+    update_user_by_phone_view,
+    register_user
 )
 
 urlpatterns = [
@@ -14,6 +15,7 @@ urlpatterns = [
     path('clients/count/', firebase_user_count),
     path('clients/filter/', filter_users_by_phone),
     path('clients/<str:user_id>/', update_user_by_id),
-    path('clients/byPhone/', update_user_by_phone_view),  
+    path('clients/byPhone/', update_user_by_phone_view),
+    path('client/register/', register_user),   
 
 ]

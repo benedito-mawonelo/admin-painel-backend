@@ -6,7 +6,8 @@ from .firebase import (
     count_users,
     get_users_by_telefone,
     update_user,
-    update_user_by_phone
+    update_user_by_phone,
+    create_user
 )
 
 
@@ -126,3 +127,18 @@ def update_user_by_phone_view(request):
     except Exception as e:
         print(f"[DEBUG] Erro inesperado: {str(e)}")
         return Response({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+def register_user(request):
+    """
+    POST /api/clients/register/
+    Registra um novo usuário no Firebase.
+    """
+    try:
+        user = create_user(request.data)
+        return Response({"message": "Usuário registrado com sucesso!", "user": user}, status=201)
+    except ValueError as ve:
+        return Response({"error": str(ve)}, status=400)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
