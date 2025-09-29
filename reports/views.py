@@ -1,13 +1,25 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Transaction
+from datetime import datetime
+
 from .firebase import (
     get_all_users,
     count_users,
     get_users_by_telefone,
     update_user,
     update_user_by_phone,
-    create_user
+    create_user,
+    
+    # 🔥 NOVAS FUNÇÕES DE RANKING
+    get_ranking_users,
+    get_current_ranking,
+    get_previous_month_winners,
+    count_ranking_users,
+    get_user_details,
+    update_user_ranking,
+    update_user_ranking_points,
+    save_monthly_ranking_snapshot
 )
 
 
@@ -142,3 +154,206 @@ def register_user(request):
         return Response({"error": str(ve)}, status=400)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+    
+    
+    
+# 🔥 NOVAS VIEWS DE RANKING
+
+@api_view(['GET'])
+def ranking_dashboard(request):
+    """
+    Endpoint que retorna todas as informações para o dashboard de ranking
+    """
+    try:
+        # Número total de usuários no ranking
+        total_ranking_users = count_ranking_users()
+        
+        # Ranking atual
+        current_ranking = get_current_ranking(limit=50)
+        
+        # Vencedores do mês anterior
+        previous_winners = get_previous_month_winners()
+        
+        # Estatísticas adicionais
+        total_users = count_users()
+        
+        return Response({
+            'total_ranking_users': total_ranking_users,
+            'total_users': total_users,
+            'current_ranking': current_ranking,
+            'previous_winners': previous_winners,
+            'ranking_percentage': round((total_ranking_users / total_users * 100), 2) if total_users > 0 else 0
+        })
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def current_ranking(request):
+    """
+    Endpoint que retorna apenas o ranking atual
+    """
+    try:
+        limit = request.GET.get('limit', 50)
+        ranking = get_current_ranking(limit=int(limit))
+        return Response(ranking)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def previous_winners(request):
+    """
+    Endpoint que retorna os vencedores do mês anterior
+    """
+    try:
+        winners = get_previous_month_winners()
+        return Response(winners)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def user_details(request, user_id):
+    """
+    Endpoint que retorna detalhes completos de um usuário
+    """
+    try:
+        user_details = get_user_details(user_id)
+        return Response(user_details)
+    except ValueError as ve:
+        return Response({'error': str(ve)}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['PATCH'])
+def update_user_ranking_view(request, user_id):
+    """
+    Endpoint para atualizar informações de ranking de um usuário
+    """
+    try:
+        pontos = request.data.get('pontos')
+        nivel = request.data.get('nivel')
+        premiado = request.data.get('premiado')
+        
+        updated_user = update_user_ranking(user_id, pontos, nivel, premiado)
+        return Response(updated_user)
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+def add_ranking_points(request, user_id):
+    """
+    Endpoint para adicionar pontos de ranking a um usuário
+    """
+    try:
+        points = request.data.get('points', 0)
+        exam_data = request.data.get('exam_data', {})
+        
+        if points <= 0:
+            return Response({'error': 'Pontos devem ser maiores que zero'}, status=400)
+        
+        updated_user = update_user_ranking_points(user_id, points, exam_data)
+        
+        if updated_user is None:
+            return Response({
+                'message': 'Usuário não elegível para ranking (não é PRO ou não aceitou)',
+                'points_added': 0
+            }, status=200)
+        
+        return Response({
+            'message': 'Pontos adicionados com sucesso',
+            'points_added': points,
+            'current_points': updated_user.get('ranking_points', 0),
+            'user': updated_user
+        })
+        
+    except ValueError as ve:
+        return Response({'error': str(ve)}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def ranking_stats(request):
+    """
+    Endpoint que retorna estatísticas do ranking - CORRIGIDA
+    """
+    try:
+        total_ranking_users = count_ranking_users()
+        total_users = count_users()
+        
+        # Obter distribuição por nível e província dos usuários do ranking
+        ranking_users = get_current_ranking(limit=1000)  # Busca todos para estatísticas
+        
+        niveis = {}
+        provincias = {}
+        
+        for user_data in ranking_users:
+            # Distribuição por nível (baseado em pontos)
+            pontos = user_data.get('points', user_data.get('ranking_points', 0))
+            if pontos >= 100:
+                nivel = "Expert"
+            elif pontos >= 50:
+                nivel = "Avançado"
+            elif pontos >= 20:
+                nivel = "Intermediário"
+            else:
+                nivel = "Iniciante"
+            
+            niveis[nivel] = niveis.get(nivel, 0) + 1
+            
+            # Distribuição por província
+            provincia = user_data.get('provincia', 'Não informada')
+            provincias[provincia] = provincias.get(provincia, 0) + 1
+        
+        return Response({
+            'total_ranking_users': total_ranking_users,
+            'total_users': total_users,
+            'ranking_percentage': round((total_ranking_users / total_users * 100), 2) if total_users > 0 else 0,
+            'distribution_by_level': niveis,
+            'distribution_by_province': provincias,
+            'current_month': datetime.now().strftime('%Y-%m')
+        })
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+@api_view(['POST'])
+def create_ranking_snapshot(request):
+    """
+    Endpoint para criar um snapshot do ranking (usar no final do mês)
+    """
+    try:
+        snapshot = save_monthly_ranking_snapshot()
+        return Response({
+            'message': 'Snapshot do ranking criado com sucesso',
+            'snapshot': snapshot
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def ranking_users_list(request):
+    """
+    Endpoint que retorna todos os usuários do ranking (com filtros)
+    """
+    try:
+        # Filtros opcionais
+        provincia = request.GET.get('provincia')
+        nivel = request.GET.get('nivel')
+        min_points = request.GET.get('min_points', 0)
+        
+        users = get_ranking_users()
+        
+        # Aplicar filtros
+        if provincia:
+            users = [u for u in users if u.get('provincia') == provincia]
+        
+        if nivel:
+            users = [u for u in users if u.get('ranking_level') == int(nivel)]
+        
+        if min_points:
+            users = [u for u in users if u.get('ranking_points', 0) >= int(min_points)]
+        
+        return Response(users)
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

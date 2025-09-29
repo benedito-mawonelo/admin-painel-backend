@@ -10,7 +10,7 @@ SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['mawonelo.pythonanywhere.com', 'https://admin-painel-frontend-fs7g6hc97-benedito-mawonelos-projects.vercel.app/', 'http://localhost:9000', 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -39,7 +39,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'mawonelo_backend.urls'
-CORS_ALLOWED_ORIGINS = ['http://localhost:9002']
+CORS_ALLOWED_ORIGINS = ['http://localhost:9002', 'https://mawonelo.pythonanywhere.com', 'https://admin-painel-frontend.vercel.app', 'http://localhost:9000', "http://192.168.1.114:9002"]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -75,7 +75,7 @@ DATABASES = {
         'USER': config('DB_USER'),
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
+        'PORT': config('DB_PORT', default='3306'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         }
@@ -85,22 +85,12 @@ DATABASES = {
 AUTH_USER_MODEL = 'users.CustomUser'
 
 # Firebase configuration
-FIREBASE_CREDENTIALS = {
-    "type": config('FIREBASE_TYPE'),
-    "project_id": config('FIREBASE_PROJECT_ID'),
-    "private_key_id": config('FIREBASE_PRIVATE_KEY_ID'),
-    "private_key": config('FIREBASE_PRIVATE_KEY'),
-    "client_email": config('FIREBASE_CLIENT_EMAIL'),
-    "client_id": config('FIREBASE_CLIENT_ID'),
-    "auth_uri": config('FIREBASE_AUTH_URI'),
-    "token_uri": config('FIREBASE_TOKEN_URI'),
-    "auth_provider_x509_cert_url": config('FIREBASE_AUTH_PROVIDER_X509_CERT_URL'),
-    "client_x509_cert_url": config('FIREBASE_CLIENT_X509_CERT_URL'),
-}
+FIREBASE_CRED_PATH = os.path.join(BASE_DIR, 'serviceAccount.json')
 
 if not firebase_admin._apps:
-    cred = credentials.Certificate(FIREBASE_CREDENTIALS)
+    cred = credentials.Certificate(FIREBASE_CRED_PATH)
     firebase_admin.initialize_app(cred)
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {

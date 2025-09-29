@@ -1,1 +1,21 @@
 serviceAccountKey.json
+# Arquivos compilados do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.json
+
+# Virtualenv
+venv/
+.env/
+*.env
+
+
+
+# Configurações locais
+*.sqlite3
+
+# Logs
+*.log
+
