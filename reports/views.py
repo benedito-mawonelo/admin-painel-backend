@@ -159,35 +159,74 @@ def register_user(request):
     
 # 🔥 NOVAS VIEWS DE RANKING
 
+# @api_view(['GET'])
+# def ranking_dashboard(request):
+#     """
+#     Endpoint que retorna todas as informações para o dashboard de ranking
+#     """
+#     try:
+#         # Número total de usuários no ranking
+#         total_ranking_users = count_ranking_users()
+        
+#         # Ranking atual
+#         current_ranking = get_current_ranking(limit=50)
+        
+#         # Vencedores do mês anterior
+#         previous_winners = get_previous_month_winners()
+        
+#         # Estatísticas adicionais
+#         total_users = count_users()
+        
+#         return Response({
+#             'total_ranking_users': total_ranking_users,
+#             'total_users': total_users,
+#             'current_ranking': current_ranking,
+#             'previous_winners': previous_winners,
+#             'ranking_percentage': round((total_ranking_users / total_users * 100), 2) if total_users > 0 else 0
+#         })
+        
+#     except Exception as e:
+#         return Response({'error': str(e)}, status=500)
+
 @api_view(['GET'])
 def ranking_dashboard(request):
     """
-    Endpoint que retorna todas as informações para o dashboard de ranking
+    Endpoint SIMPLIFICADO para produção - apenas dados essenciais
     """
     try:
-        # Número total de usuários no ranking
+        # Apenas dados críticos para o dashboard
         total_ranking_users = count_ranking_users()
-        
-        # Ranking atual
-        current_ranking = get_current_ranking(limit=50)
-        
-        # Vencedores do mês anterior
-        previous_winners = get_previous_month_winners()
-        
-        # Estatísticas adicionais
         total_users = count_users()
+        
+        # Ranking apenas top 10 para performance
+        current_ranking = get_current_ranking(limit=10)
+        
+        # Vencedores anteriores (limitado)
+        previous_winners = get_previous_month_winners()[:5]  # Apenas top 5
         
         return Response({
             'total_ranking_users': total_ranking_users,
             'total_users': total_users,
             'current_ranking': current_ranking,
             'previous_winners': previous_winners,
-            'ranking_percentage': round((total_ranking_users / total_users * 100), 2) if total_users > 0 else 0
+            'ranking_percentage': round((total_ranking_users / total_users * 100), 2) if total_users > 0 else 0,
+            'status': 'success',
+            'performance_optimized': True
         })
         
     except Exception as e:
-        return Response({'error': str(e)}, status=500)
-
+        # Fallback básico se houver erro
+        return Response({
+            'total_ranking_users': 0,
+            'total_users': 0,
+            'current_ranking': [],
+            'previous_winners': [],
+            'ranking_percentage': 0,
+            'status': 'fallback',
+            'error': str(e)
+        }, status=200)  # Sempre retorna 200 mesmo com erro
+        
+        
 @api_view(['GET'])
 def current_ranking(request):
     """

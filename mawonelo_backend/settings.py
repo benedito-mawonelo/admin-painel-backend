@@ -82,6 +82,19 @@ DATABASES = {
     }
 }
 
+# settings.py
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,  # 5 minutos
+    }
+}
+
+# Timeout global para views
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+
 AUTH_USER_MODEL = 'users.CustomUser'
 
 # Firebase configuration
