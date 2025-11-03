@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from .models import Transaction
 from datetime import datetime
 
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+
 from .firebase import (
     get_all_users,
     count_users,
@@ -394,5 +397,89 @@ def ranking_users_list(request):
         
         return Response(users)
         
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+from .models import Video
+from .serializers import VideoSerializer
+
+@api_view(['GET'])
+@permission_classes([AllowAny]) 
+def get_current_video(request):
+    """
+    Endpoint que retorna o vídeo atual da premiação
+    """
+    try:
+        video = Video.objects.filter(active=True).first()
+        if video:
+            serializer = VideoSerializer(video)
+            return Response(serializer.data)
+        return Response({'message': 'Nenhum vídeo ativo encontrado'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+def create_video(request):
+    """
+    Endpoint para adicionar um novo vídeo do YouTube
+    """
+    try:
+        serializer = VideoSerializer(data=request.data)
+        if serializer.is_valid():
+            # Se este vídeo for marcado como ativo, desativa os outros
+            if serializer.validated_data.get('active', False):
+                Video.objects.filter(active=True).update(active=False)
+            
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['DELETE'])
+def delete_video(request, video_id):
+    """
+    Endpoint para deletar um vídeo
+    """
+    try:
+        video = Video.objects.get(id=video_id)
+        video.delete()
+        return Response({'message': 'Vídeo deletado com sucesso'}, status=200)
+    except Video.DoesNotExist:
+        return Response({'error': 'Vídeo não encontrado'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['PATCH'])
+def set_active_video(request, video_id):
+    """
+    Endpoint para definir um vídeo como ativo
+    """
+    try:
+        # Desativa todos os vídeos primeiro
+        Video.objects.filter(active=True).update(active=False)
+        
+        # Ativa o vídeo específico
+        video = Video.objects.get(id=video_id)
+        video.active = True
+        video.save()
+        
+        serializer = VideoSerializer(video)
+        return Response(serializer.data)
+    except Video.DoesNotExist:
+        return Response({'error': 'Vídeo não encontrado'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def list_videos(request):
+    """
+    Endpoint que retorna todos os vídeos
+    """
+    try:
+        videos = Video.objects.all().order_by('-created_at')
+        serializer = VideoSerializer(videos, many=True)
+        return Response(serializer.data)
     except Exception as e:
         return Response({'error': str(e)}, status=500)

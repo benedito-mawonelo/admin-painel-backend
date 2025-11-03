@@ -29,3 +29,19 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"Transaction {self.id} - {self.status} - {self.amount}"
+
+
+
+class Video(models.Model):
+    title = models.CharField(max_length=200)
+    youtube_url = models.URLField(max_length=500)
+    description = models.TextField(blank=True, null=True)
+    active = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        db_table = 'videos'

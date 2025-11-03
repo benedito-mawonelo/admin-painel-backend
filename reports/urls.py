@@ -32,4 +32,12 @@ urlpatterns = [
     path('users/<str:user_id>/details/', views.user_details, name='user-details'),
     path('users/<str:user_id>/update-ranking/', views.update_user_ranking_view, name='update-user-ranking'),
     path('users/<str:user_id>/add-ranking-points/', views.add_ranking_points, name='add-ranking-points'),
+    
+    
+    # URLs para gerenciar vídeos
+    path('videos/', views.list_videos, name='list_videos'),
+    path('videos/current/', views.get_current_video, name='get_current_video'),
+    path('videos/create/', views.create_video, name='create_video'),
+    path('videos/<int:video_id>/delete/', views.delete_video, name='delete_video'),
+    path('videos/<int:video_id>/set-active/', views.set_active_video, name='set_active_video'),
 ]

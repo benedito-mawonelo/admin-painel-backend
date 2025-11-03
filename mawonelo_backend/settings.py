@@ -10,7 +10,7 @@ SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['mawonelo.pythonanywhere.com', 'https://admin-painel-frontend-fs7g6hc97-benedito-mawonelos-projects.vercel.app/', 'http://localhost:9000', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['mawonelo.pythonanywhere.com', 'https://admin-painel-frontend-fs7g6hc97-benedito-mawonelos-projects.vercel.app/', 'http://localhost:9000', 'localhost', '127.0.0.1', '192.168.1.114']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -30,16 +30,18 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'mawonelo_backend.urls'
-CORS_ALLOWED_ORIGINS = ['http://localhost:9002', 'https://mawonelo.pythonanywhere.com', 'https://admin-painel-frontend.vercel.app', 'http://localhost:9000', "http://192.168.1.114:9002"]
+# CORS_ALLOWED_ORIGINS = ['http://localhost:9002', 'https://mawonelo.pythonanywhere.com', 'https://admin-painel-frontend.vercel.app', 'http://localhost:9000', "http://192.168.1.114:9002", "http://localhost:8080", '192.168.1.114']
+CORS_ALLOW_ALL_ORIGINS = True
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
