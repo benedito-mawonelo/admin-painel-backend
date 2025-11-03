@@ -2,6 +2,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Transaction
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -417,6 +419,7 @@ def get_current_video(request):
             return Response(serializer.data)
         return Response({'message': 'Nenhum vídeo ativo encontrado'}, status=404)
     except Exception as e:
+        logger.exception("Erro ao buscar vídeo atual")
         return Response({'error': str(e)}, status=500)
 
 @api_view(['POST'])
@@ -435,6 +438,7 @@ def create_video(request):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
     except Exception as e:
+        logger.exception("Erro ao listar vídeos")
         return Response({'error': str(e)}, status=500)
 
 @api_view(['DELETE'])
