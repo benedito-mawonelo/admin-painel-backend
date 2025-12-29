@@ -417,7 +417,7 @@ def get_current_video(request):
         if video:
             serializer = VideoSerializer(video)
             return Response(serializer.data)
-        return Response({'message': 'Nenhum vídeo ativo encontrado'}, status=404)
+        return Response({'message': 'Nenhum vídeo ativo encontrado'})
     except Exception as e:
         logger.exception("Erro ao buscar vídeo atual")
         return Response({'error': str(e)}, status=500)
